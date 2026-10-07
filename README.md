@@ -4,9 +4,9 @@ A lightweight GitHub Pages site featuring a landing page and a calculator for co
 
 ## Contents
 
-- `index.html` — landing page
-- `Gas vs. EV_ cost per mile.html` — gas vs. electric cost calculator
-- `_config.yml` — GitHub Pages configuration
+- `index.html` â€” landing page
+- `gas-vs-ev-cost-calculator.html` â€” gas vs. electric cost calculator
+- `_config.yml` â€” GitHub Pages configuration
 
 ## Run locally
 
@@ -22,7 +22,7 @@ Open the local URL printed by Jekyll, usually `http://localhost:4000`.
 
 Visit the landing page and select **Open the calculator**, or open the calculator directly:
 
-`Gas vs. EV_ cost per mile.html`
+`gas-vs-ev-cost-calculator.html`
 
 ## Deployment
 
