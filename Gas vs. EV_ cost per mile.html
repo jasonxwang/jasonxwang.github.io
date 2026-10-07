@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gas vs. EV: cost per mile</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+:root{--bg:#eef2f5;--panel:#fff;--ink:#12303b;--mute:#5d7580;--line:#d3dde3;--gas:#d97b00;--ev:#1f6feb;--good:#0f8a5f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a20;--panel:#16262e;--ink:#e6eff3;--mute:#93aab4;--line:#2a3f49;--gas:#f0a03a;--ev:#5b9bff;--good:#4cd6a0}}
+:root[data-theme="dark"]{--bg:#0e1a20;--panel:#16262e;--ink:#e6eff3;--mute:#93aab4;--line:#2a3f49;--gas:#f0a03a;--ev:#5b9bff;--good:#4cd6a0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:920px;margin:0 auto;padding:28px 18px 48px}
+h1{font-size:clamp(28px,6vw,46px);line-height:1.05;font-weight:800;margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 24px;max-width:56ch}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.split{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:10px;padding:18px}
+.gas{--c:var(--gas)}.ev{--c:var(--ev)}
+.card h2{margin:0 0 12px;font-size:18px;color:var(--c)}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input,select{width:100%;font:inherit;font-size:18px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--c,var(--ev));outline-offset:1px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chips button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;background:none;color:var(--ink);cursor:pointer}
+.big{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.big b{display:block;font-size:clamp(34px,8vw,52px);line-height:1;font-weight:800;color:var(--c);font-variant-numeric:tabular-nums}
+.big span{color:var(--mute);font-size:14px}
+.verdict{margin:18px 0;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.verdict p{margin:0 0 14px;font-size:clamp(18px,3.4vw,24px);font-weight:600;line-height:1.25}
+.bar{height:22px;border-radius:5px;margin:6px 0;min-width:4px;transition:width .35s}
+.barlab{font-size:13px;color:var(--mute);display:flex;justify-content:space-between}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.fact{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.fact b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.fact span{font-size:14px;color:var(--mute)}
+.pick{display:grid;grid-template-columns:1.1fr 1.4fr .8fr;gap:6px}.pick select{font-size:15px;padding:8px 6px}.note{font-size:13px;color:var(--mute);margin:6px 0 0}
+.annual{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:18px 0}
+.annual div{flex:0 0 190px}
+@media(prefers-reduced-motion:reduce){.bar{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Gas or electric: what does a mile cost?</h1>
+<p class="sub">Enter your car's mileage and what you pay for fuel. Everything below updates as you type.</p>
+
+<div class="split">
+  <section class="card gas">
+    <h2>Gas car</h2>
+    <label>Pick a car (optional)</label>
+    <div class="pick"><select id="gMk" aria-label="Make"></select><select id="gMd" aria-label="Model"></select><select id="gYr" aria-label="Year"></select></div>
+    <p class="note" id="gNote">Or type your own numbers below.</p>
+    <label for="mpg">Fuel economy (miles per gallon)</label>
+    <input id="mpg" type="number" inputmode="decimal" min="1" step="any" value="30">
+    <label for="gal">Gas price ($ per gallon)</label>
+    <input id="gal" type="number" inputmode="decimal" min="0" step="any" value="4.25">
+    <div class="big"><b id="gasCpm">–</b><span>per mile</span></div>
+  </section>
+  <section class="card ev">
+    <h2>Electric car</h2>
+    <label>Pick a car (optional)</label>
+    <div class="pick"><select id="eMk" aria-label="Make"></select><select id="eMd" aria-label="Model"></select><select id="eYr" aria-label="Year"></select></div>
+    <p class="note" id="eNote">Or type your own numbers below.</p>
+    <label for="eff">Efficiency (miles per kWh)</label>
+    <input id="eff" type="number" inputmode="decimal" min="0.1" step="any" value="3.5">
+    <label for="kwh">Electricity price ($ per kWh)</label>
+    <input id="kwh" type="number" inputmode="decimal" min="0" step="any" value="0.22">
+    <div class="chips" aria-label="Charging price presets">
+      <button type="button" data-k="0.15">Cheap home night rate $0.15</button>
+      <button type="button" data-k="0.30">Typical home $0.30</button>
+      <button type="button" data-k="0.50">Fast charger $0.50</button>
+    </div>
+    <div class="big"><b id="evCpm">–</b><span>per mile</span></div>
+  </section>
+</div>
+
+<div class="verdict" aria-live="polite">
+  <p id="verdict"></p>
+  <div class="barlab"><span>Gas</span><span id="gasBarLab"></span></div>
+  <div class="bar" id="gasBar" style="background:var(--gas)"></div>
+  <div class="barlab"><span>Electric</span><span id="evBarLab"></span></div>
+  <div class="bar" id="evBar" style="background:var(--ev)"></div>
+</div>
+
+<div class="annual">
+  <div><label for="miles">Miles driven per year</label>
+  <input id="miles" type="number" inputmode="numeric" min="0" step="500" value="12000"></div>
+</div>
+
+<div class="facts">
+  <div class="fact"><b id="f100">–</b><span>Cost to drive 100 miles, gas vs. electric</span></div>
+  <div class="fact"><b id="fYear">–</b><span>Yearly fuel cost, gas vs. electric</span></div>
+  <div class="fact"><b id="fSave">–</b><span id="fSaveL">Yearly difference</span></div>
+  <div class="fact"><b id="fEq">–</b><span>Electricity price per kWh that would match your gas cost per mile</span></div>
+  <div class="fact"><b id="fGalEq">–</b><span>Gas price per gallon that would match your electric cost per mile</span></div>
+  <div class="fact"><b id="fMpge">–</b><span>Your EV's MPGe (33.7 kWh of energy = 1 gallon of gas)</span></div>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const n=id=>parseFloat($(id).value)||0;
+const usd=(v,d=2)=>"$"+v.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+function calc(){
+  const mpg=n("mpg"),gal=n("gal"),eff=n("eff"),kwh=n("kwh"),mi=n("miles");
+  if(mpg<=0||eff<=0){return}
+  const g=gal/mpg, e=kwh/eff;
+  $("gasCpm").textContent=usd(g,3); $("evCpm").textContent=usd(e,3);
+  const max=Math.max(g,e,.0001);
+  $("gasBar").style.width=(g/max*100)+"%"; $("evBar").style.width=(e/max*100)+"%";
+  $("gasBarLab").textContent=usd(g*100)+" per 100 mi"; $("evBarLab").textContent=usd(e*100)+" per 100 mi";
+  const diff=(g-e)*mi;
+  if(Math.abs(g-e)<.0005) $("verdict").textContent="About the same cost per mile.";
+  else if(e<g) $("verdict").textContent="Electric costs "+Math.round((1-e/g)*100)+"% less per mile, saving "+usd(Math.abs(diff),0)+" a year.";
+  else $("verdict").textContent="Gas costs "+Math.round((1-g/e)*100)+"% less per mile with these prices, saving "+usd(Math.abs(diff),0)+" a year.";
+  $("f100").textContent=usd(g*100,0)+" vs. "+usd(e*100,0);
+  $("fYear").textContent=usd(g*mi,0)+" vs. "+usd(e*mi,0);
+  $("fSave").textContent=usd(Math.abs(diff),0);
+  $("fSaveL").textContent=diff>=0?"Saved per year by driving electric":"Extra per year for driving electric";
+  $("fEq").textContent=usd(g*eff,3)+"/kWh";
+  $("fGalEq").textContent=usd(e*mpg,2)+"/gal";
+  $("fMpge").textContent=Math.round(eff*33.7)+" MPGe";
+}
+document.querySelectorAll("input").forEach(i=>i.addEventListener("input",calc));
+document.querySelectorAll(".chips button").forEach(b=>b.addEventListener("click",()=>{$("kwh").value=b.dataset.k;calc()}));
+
+// EPA combined ratings (approximate, rounded). [make, model, firstYear, lastYear, value]
+const GAS=[["Toyota","Camry",2018,2024,32],["Toyota","Corolla",2020,2024,34],["Toyota","RAV4",2019,2024,30],["Toyota","Tacoma",2016,2023,21],["Toyota","Prius",2016,2022,52],["Toyota","Prius",2023,2024,57],
+["Honda","Civic",2022,2024,33],["Honda","Accord",2018,2024,32],["Honda","CR-V",2017,2024,30],["Honda","Odyssey",2018,2024,22],
+["Ford","F-150",2021,2024,20],["Ford","Escape",2020,2024,28],["Ford","Mustang",2018,2024,25],
+["Chevrolet","Silverado 1500",2019,2024,20],["Chevrolet","Equinox",2018,2024,28],["Chevrolet","Malibu",2016,2022,32],
+["Nissan","Altima",2019,2024,32],["Nissan","Rogue",2021,2024,30],
+["Hyundai","Elantra",2021,2024,34],["Hyundai","Tucson",2022,2024,26],["Kia","Forte",2019,2024,33],["Kia","Sportage",2023,2024,28],
+["Subaru","Outback",2020,2024,29],["Subaru","Crosstrek",2019,2024,29],["Mazda","Mazda3",2019,2024,30],["Mazda","CX-5",2019,2024,28],
+["Jeep","Wrangler",2018,2024,20],["Jeep","Grand Cherokee",2022,2024,22],["Volkswagen","Jetta",2019,2024,33],
+["BMW","3 Series (330i)",2019,2024,30],["BMW","5 Series (530i)",2017,2023,28],["BMW","X1",2023,2024,28],["BMW","X3 (30i)",2018,2024,25],["BMW","X5 (40i)",2019,2024,23],["BMW","M3",2021,2024,18],
+["Porsche","911 Carrera",2020,2024,20],["Porsche","718 Cayman",2017,2024,22],["Porsche","Macan",2019,2024,21],["Porsche","Cayenne",2019,2024,20],["Porsche","Panamera",2017,2023,21]];
+const EV=[["Tesla","Model 3",2021,2024,4.0],["Tesla","Model Y",2020,2024,3.6],["Tesla","Model S",2020,2024,3.6],["Tesla","Model X",2020,2024,2.7],
+["Chevrolet","Bolt EV",2017,2023,3.6],["Nissan","Leaf",2018,2022,3.3],["Ford","Mustang Mach-E",2021,2024,3.2],["Ford","F-150 Lightning",2022,2024,2.3],
+["Hyundai","Ioniq 5",2022,2024,2.9],["Hyundai","Ioniq 6",2023,2024,4.2],["Hyundai","Kona Electric",2019,2023,3.6],["Kia","EV6",2022,2024,3.5],
+["Volkswagen","ID.4",2021,2024,2.9],["Rivian","R1T",2022,2024,2.2],
+["BMW","i3",2017,2021,3.3],["BMW","i4 eDrive40",2022,2024,3.2],["BMW","iX xDrive50",2022,2024,2.5],["Porsche","Taycan",2020,2024,2.5]];
+function picker(k,data,input,unit){
+  const mk=$(k+"Mk"),md=$(k+"Md"),yr=$(k+"Yr"),note=$(k+"Note");
+  const fill=(el,items,ph)=>{el.innerHTML="<option value=''>"+ph+"</option>"+items.map(v=>"<option>"+v+"</option>").join("")};
+  fill(mk,[...new Set(data.map(d=>d[0]))].sort(),"Make");fill(md,[],"Model");fill(yr,[],"Year");
+  mk.onchange=()=>{fill(md,[...new Set(data.filter(d=>d[0]==mk.value).map(d=>d[1]))],"Model");fill(yr,[],"Year")};
+  md.onchange=()=>{const rows=data.filter(d=>d[0]==mk.value&&d[1]==md.value);const ys=[];rows.forEach(r=>{for(let y=r[3];y>=r[2];y--)ys.push(y)});fill(yr,ys,"Year");if(ys.length==1){yr.value=ys[0];yr.onchange()}};
+  yr.onchange=()=>{const r=data.find(d=>d[0]==mk.value&&d[1]==md.value&&yr.value>=d[2]&&yr.value<=d[3]);if(!r)return;$(input).value=r[4];note.textContent=yr.value+" "+mk.value+" "+md.value+": about "+r[4]+" "+unit+" (EPA combined). Trims vary, so adjust if yours differs.";calc()};
+}
+picker("g",GAS,"mpg","MPG");picker("e",EV,"eff","miles per kWh");
+calc();
+</script>
+</body>
+</html>
